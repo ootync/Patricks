@@ -18,17 +18,18 @@ function display_help(){
 	print <<<EOF
 PulseAudio Tricks!
 Usage:
-	patricks ls [<Entity>]							— Display a short list of entities of the specified type.
+	patricks ls [<Entity>]								— Display a short list of entities of the specified type.
 	patricks ls <Entity> <index|name> {volume|ports|profiles|properties}		— Display complex Entity properties.
 	patricks show [<Entity> [index|name]]						— Display a detailed list of entities, or one entity.
-	patricks mv {sink|source} <index|name> {all|<id> [...]}			— Move some/all Sink-Input/Source-Output to another Sink/Input.
+	patricks mv {sink|source} <index|name> {all|<id> [...]}				— Move some/all Sink-Input/Source-Output to another Sink/Input.
 	patricks set {sink|source} <index|name> default					— Set the default Sink/Source.
-	patricks set {sink|source} <index|name> port <index|name>		— Change the port of a Sink/Source.
-	patricks set card <index|name> profile <index|name>				— Change the profile of a card.
-	patricks suspend {sink|source} <index|name>						— Suspend a Sink/Source.
-	patricks volume {sink|input|source} <index|name> mute [{0|1}]	— Set the mute switch, or toggle.
-	patricks volume {sink|input|source} <index|name> set 100%		— Set the volume of a Sink/Source or a Sink-Input.
-Entities: $entities
+	patricks set {sink|source} <index|name> port {next|<index|name>}		— Change the port of a Sink/Source.
+	patricks set card <index|name> profile {next|<index|name>}			— Change the profile of a card.
+	patricks suspend {sink|source} <index|name>					— Suspend a Sink/Source.
+	patricks volume {sink|input|source} <index|name> mute [{0|1}]			— Set the mute switch, or toggle.
+	patricks volume {sink|input|source} <index|name> set 100%			— Set the volume of a Sink/Source or a Sink-Input.
+Entities:
+	$entities
 Feature: all the literals can be shortened! 'sinks' => 'si', 'volume' => 'vol'
 Examples:
 	patricks ls sinks
@@ -37,7 +38,7 @@ Examples:
 	patricks mv sink 0 all
 	patricks mv sink 'alsa_card.pci-0000_00_1b.0' 1 19 235
 	patricks set sink 0 def
-	patricks set source 0 port 0
+	patricks set source 0 port next
 	patricks set card 0 prof 0
 	patricks suspend sink 0
 	patricks volume sink 0 mute
@@ -177,18 +178,19 @@ try {
 					`pacmd set-default-$entity_t "{$Entity->name}"`;
 					print "$Entity\n";
 					break;
-				case 'port':
+				case 'port': // TODO: next-port feature
 					$Port = $Entity->ports[$set_ref];
 					`pacmd set-$entity_t-port "{$Entity->id}" "{$Port->name}"`;
 					print "{$Port}\n";
 					break;
-				case 'profile':
+				case 'profile': // TODO: next-profile feature
 					$Profile = $Entity->profiles[$set_ref];
 					`pacmd set-$entity_t-profile "{$Entity->id}" "{$Profile->name}"`;
 					print "{$Profile}\n";
 					break;
 				}
 			break;
+
 		// TODO: volume, mute, suspend
 		default:
 			display_help();
