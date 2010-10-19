@@ -21,7 +21,7 @@ Usage:
 	patricks ls [<Entity>]								— Display a short list of entities of the specified type.
 	patricks ls <Entity> <index|name> {volume|ports|profiles|properties}		— Display complex Entity properties.
 	patricks show [<Entity> [index|name]]						— Display a detailed list of entities, or one entity.
-	patricks mv {sink|source} <index|name> {all|<id> [...]}				— Move some/all Sink-Input/Source-Output to another Sink/Input.
+	patricks mv {sink|source} {next|<index|name>} {all|<id> [...]}			— Move some/all Sink-Input/Source-Output to another Sink/Input.
 	patricks set {sink|source} <index|name> default					— Set the default Sink/Source.
 	patricks set {sink|source} <index|name> port {next|<index|name>}		— Change the port of a Sink/Source.
 	patricks set card <index|name> profile {next|<index|name>}			— Change the profile of a card.
@@ -125,20 +125,29 @@ try {
 			//=== Prepare
 			switch ($move_to_entity_t){
 				case 'sink':
-					$move_to = $PA->sinks[$move_to_ref];
+					if ($move_to_ref != 'next')
+						$move_to = $PA->sinks[$move_to_ref];
+						else
+						$move_to = next_entity($PA->sinks, 'is_default');
 					$move_entity_t = 'input';
 					$move_entities = $PA->inputs;
 					break;
 				case 'source':
-					$move_to = $PA->sources[$move_to_ref];
+					if ($move_to_ref != 'next')
+						$move_to = $PA->sources[$move_to_ref];
+						else
+						$move_to = next_entity($PA->sources, 'is_default');
 					$move_entity_t = 'output';
 					$move_entities = $PA->outputs;
 					break;
 				}
 			//=== Find entities
+			$move_all = false;
 			foreach ($move_refs as $ref)
-				if (strcasecmp($ref, 'all') === 0)
+				if (strcasecmp($ref, 'all') === 0){
 					$move = (array)$move_entities;
+					$move_all = TRUE;
+					}
 					else{
 					try { $move[] = $move_entities[$ref]; }
 						catch (EPulseAudio $e) { // Not found
@@ -149,10 +158,15 @@ try {
 					}
 			//=== Move them
 			$move_ids = array_map(function($Entity){return $Entity->id;}, $move); // Convert to the list of indexes
-			print "Moving {".implode(',',$move_ids)."} {$move_entity_t}s to $move_to_entity_t \"{$move_to->name}\"...\n";
+			print "Moving ".count($move_ids)." {$move_entity_t}s {".implode(',',$move_ids)."} to $move_to_entity_t \"{$move_to->name}\"...\n";
 			foreach ($move_ids as $id)
 				`pactl move-$move_to_entity_t-$move_entity_t "$id" "{$move_to->name}"`;
-			break;
+			//=== Set default if moved 'all'
+			if ($move_all) {
+				$ARGS = array($move_to_entity_t, $move_to->name, 'default');
+				// proceed to 'SET sink|source <ref> default'
+				}
+				else break;
 		case 'SET':
 			if (count($ARGS) < 3 || ($ARGS[2] != 'default' && count($ARGS) < 4)) {
 				display_help();
@@ -162,7 +176,7 @@ try {
 			$entity_t = str_imatch(array('sink', 'source', 'card'), array_shift($ARGS), true); // [0]: The entity type to modify
 			$entity_ref = array_shift($ARGS); // [1]: Entity reference
 			$Entity = null; // The entity to modify
-			$setprop = str_imatch(array('default', 'port', 'profile'), array_shift($ARGS), true); // [2]: Its proprerty to modify
+			$setprop = str_imatch(array('default', 'port', 'profile'), array_shift($ARGS), true); // [2]: Its property to modify
 			$set_ref = ''; // [3]: The entity to reference into $setprop
 			if ($setprop != 'default')
 				$set_ref = array_shift($ARGS);
@@ -179,7 +193,10 @@ try {
 					print "$Entity\n";
 					break;
 				case 'port': // TODO: next-port feature
-					$Port = $Entity->ports[$set_ref];
+					if ($set_ref != 'next')
+						$Port = $Entity->ports[$set_ref];
+						else
+						$Port = next_entity($Entity->ports, 'is_active');
 					`pacmd set-$entity_t-port "{$Entity->id}" "{$Port->name}"`;
 					print "{$Port}\n";
 					break;

@@ -35,3 +35,24 @@ function str_imatch($haystack, $needle, $partial = true){
 		throw new ECli('ent_nameN', compact('needle', 'candidates'));
 	return array_shift($candidates);
 	}
+
+/** Find the 'next' entity (based on the 'is_default' property)
+ * @param __PAentities	$entities	Entities to search
+ * @param string		$propname	Property name to check for =TRUE
+ * @return PulseAudioEntity
+ */
+function next_entity(__PAentities $entities, $propname = 'is_default'){
+	$First = null;
+	$Current = null;
+	$Next = null;
+	foreach ($entities as $Entity){
+		if (is_null($First))
+			$First = $Entity;
+		if (is_null($Current)){
+			if ($Entity->$propname)
+				$Current = $Entity;
+			} elseif (is_null($Next))
+			$Next = $Entity;
+		}
+	return $Next? $Next : $First;
+	}
