@@ -25,7 +25,7 @@ Usage:
 	patricks set {sink|source} <index|name> default					— Set the default Sink/Source.
 	patricks set {sink|source} <index|name> port {next|<index|name>}		— Change the port of a Sink/Source.
 	patricks set card <index|name> profile {next|<index|name>}			— Change the profile of a card.
-	patricks suspend {sink|source} <index|name>					— Suspend a Sink/Source.
+	patricks suspend {sink|source} <index|name> [{0|1}]				— Suspend a Sink/Source.
 	patricks volume {sink|input|source} <index|name> mute [{0|1}]			— Set the mute switch, or toggle.
 	patricks volume {sink|input|source} <index|name> set 100%			— Set the volume of a Sink/Source or a Sink-Input.
 Entities:
@@ -40,7 +40,7 @@ Examples:
 	patricks set sink 0 def
 	patricks set source 0 port next
 	patricks set card 0 prof 0
-	patricks suspend sink 0
+	patricks suspend sink 0 1
 	patricks volume sink 0 mute
 	patricks vol sink 0 set 10%
 (c) 10.2010 o_O Tync, ICQ# 1227-700, JID: ootync@gmail.com
@@ -58,7 +58,7 @@ $ARGS = array_slice($argv, 2);
 
 /* ==========[ COMMANDS ] ========== */
 
-try { $CMD = strtoupper(str_imatch(array('ls', 'show', 'mv', 'set'), $CMD, true)); }
+try { $CMD = strtoupper(str_imatch(array('ls', 'show', 'mv', 'set', 'suspend'), $CMD, true)); }
 	catch (ECli $e) { $CMD = '*UNKNOWN*'; }
 
 try {
@@ -182,32 +182,48 @@ try {
 				$set_ref = array_shift($ARGS);
 
 			//=== Prepare
-			$entname = "{$entity_t}s";
-			$entities = $PA->$entname;
-			$Entity = $entities[$entity_ref];
+			$Entity = find_entity($PA, "{$entity_t}s", $entity_ref);
 
 			//=== Action!
 			switch ($setprop){
 				case 'default':
 					`pacmd set-default-$entity_t "{$Entity->name}"`;
-					print "$Entity\n";
+					print "$Entity: default $entity_t\n";
 					break;
-				case 'port': // TODO: next-port feature
+				case 'port':
 					if ($set_ref != 'next')
 						$Port = $Entity->ports[$set_ref];
 						else
 						$Port = next_entity($Entity->ports, 'is_active');
 					`pacmd set-$entity_t-port "{$Entity->id}" "{$Port->name}"`;
-					print "{$Port}\n";
+					print "$Entity: {$Port}\n";
 					break;
-				case 'profile': // TODO: next-profile feature
+				case 'profile':
 					$Profile = $Entity->profiles[$set_ref];
 					`pacmd set-$entity_t-profile "{$Entity->id}" "{$Profile->name}"`;
-					print "{$Profile}\n";
+					print "$Entity: {$Profile}\n";
 					break;
 				}
 			break;
+		case 'SUSPEND':
+			if (count($ARGS) < 2) {
+				display_help();
+				exit(1);
+				}
+			//=== Collect data
+			$entity_t = str_imatch(array('sink', 'source'), array_shift($ARGS), true); // [0]: The entity type to modify
+			$entity_ref = array_shift($ARGS); // [1]: Entity reference
+			$switch = count($ARGS)?  (  (int)(bool)array_shift($ARGS)  )  : 'toggle'; // [2]: switch action
 
+			//=== Prepare
+			$Entity = find_entity($PA, "{$entity_t}s", $entity_ref);
+
+			//=== Action!
+			if ($switch === 'toggle')
+				$switch = ($Entity->state == 'SUSPENDED')? 0 : 1;
+			`pactl suspend-$entity_t "{$Entity->name}" $switch`;
+			print "$Entity: ".($switch?'suspend':'run')."\n";
+			break;
 		// TODO: volume, mute, suspend
 		default:
 			display_help();

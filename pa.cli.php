@@ -36,6 +36,16 @@ function str_imatch($haystack, $needle, $partial = true){
 	return array_shift($candidates);
 	}
 
+/** Find an entity within PulseAudio
+ * @param PulseAudio	$PA
+ * @param string		$entity_ts	Entity type: 'sinks'. $PA's property, actually
+ * @param int|string	Entity reference
+ */
+function find_entity(PulseAudio $PA, $entity_ts, $entity_ref){
+	$entities = $PA->$entity_ts;
+	return $entities[$entity_ref];
+	}
+
 /** Find the 'next' entity (based on the 'is_default' property)
  * @param __PAentities	$entities	Entities to search
  * @param string		$propname	Property name to check for =TRUE
