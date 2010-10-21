@@ -1,0 +1,4 @@
+Good signature in the comments header
+README file!
+Rename '*.php' to '*.inc'?
+It can be good to rename PulseAudio::sinks property to singular form (and all the rest)

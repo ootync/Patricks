@@ -190,8 +190,8 @@ class PulseAudio {
 			$title = ($show_proplist?"\t":'').ucwords(strtr($field, '_', ' '));
 			if ($value instanceof __PA_proplist_t)
 				$ret .= $show_proplist? ("$title:\n".rtrim(str_replace("\n", "\n\t\t", (string)$value))."\n") : ("$title: ".count($value).' items');
-				elseif (is_array($value))
-				$ret .= "$title: ".implode(', ', $value)."\n";
+				elseif (is_array($value) || $value instanceof __PAentities)
+				$ret .= "$title: ".implode(', ', (array)$value)."\n";
 				elseif (is_bool($value))
 				$ret .= "$title: ".($value? 'yes' : 'no')."\n";
 				elseif (is_null($value))

@@ -6,8 +6,10 @@
  * Enjoy! :)
  */
 
-require("/media/0DAY/C0ding/webdev/www/SCRIPTS/My/LOCAL/PulseAudio/PulseAudio.API.php");
-require("/media/0DAY/C0ding/webdev/www/SCRIPTS/My/LOCAL/PulseAudio/pa.cli.php");
+set_include_path(get_include_path() . PATH_SEPARATOR . dirname(__FILE__));
+
+require("PulseAudio.API.php");
+require("pa.cli.php");
 
 $PA = new PulseAudio(`pactl list`, `pactl stat`);
 
@@ -19,8 +21,8 @@ function display_help(){
 PulseAudio Tricks!
 Usage:
 	patricks ls [<Entity>]								— Display a short list of entities of the specified type.
+	patricks ls <Entity> <index|name>						— Display a detailed info on one entity
 	patricks ls <Entity> <index|name> {volume|ports|profiles|properties}		— Display complex Entity properties.
-	patricks show [<Entity> [index|name]]						— Display a detailed list of entities, or one entity.
 	patricks mv {sink|source} {next|<index|name>} {all|<id> [...]}			— Move some/all Sink-Input/Source-Output to another Sink/Input.
 	patricks set {sink|source} <index|name> default					— Set the default Sink/Source.
 	patricks set {sink|source} <index|name> port {next|<index|name>}		— Change the port of a Sink/Source.
@@ -33,8 +35,8 @@ Entities:
 Feature: all the literals can be shortened! 'sinks' => 'si', 'volume' => 'vol'
 Examples:
 	patricks ls sinks
+	patricks ls sink 0
 	patricks ls si 'alsa_card.pci-0000_00_1b.0' vol
-	patricks show sink 0
 	patricks mv sink 0 all
 	patricks mv sink 'alsa_card.pci-0000_00_1b.0' 1 19 235
 	patricks set sink 0 def
@@ -63,50 +65,53 @@ try { $CMD = strtoupper(str_imatch(array('ls', 'show', 'mv', 'set', 'suspend'), 
 
 try {
 	switch ($CMD){
-		case 'SHOW':
 		case 'LS':
-			$entns = PulseAudio::$ENT_LIST;
+			$entities_t = PulseAudio::$ENT_LIST;
 			// [0]: entity type
 			if (isset($ARGS[0]))
-				$entns = array(  str_imatch(PulseAudio::$ENT_LIST, $ARGS[0], true)  );
+				$entities_t = array(  str_imatch(PulseAudio::$ENT_LIST, $ARGS[0], true)  );
 			// Iterate
-			foreach ($entns as $entn){
-				$Entities = $PA->$entn;
+			foreach ($entities_t as $entity_t){
+				$Entities = $PA->$entity_t;
 				// [1]: entity reference
 				if (isset($ARGS[1])){
 					if (!isset($Entities[$ARGS[1]]))
 						exit(100);
 					$Entities = array(  $Entities[$ARGS[1]]  );
+					if (!isset($ARGS[2]))
+						$ARGS[2] = 'FULL';
 					}
+				// [2]: display additional info
+				$infotype = '';
+				if (isset($ARGS[2]))
+					$infotype = str_imatch(array('full', 'volume','ports','profiles','properties'), $ARGS[2], true );
 				// Print
 				foreach ($Entities as $Entity)
-					if (isset($ARGS[2])){ // [2]: complex property display
-							$infotype = str_imatch(array('volume','ports','profiles','properties'), $ARGS[2], true );
-							switch ($infotype){
-								case 'volume':
-									if (isset($Entity->volume) && !is_null($Entity->volume))
-										print $Entity->volume->Display();
-									break;
-								case 'ports':
-								case 'profiles':
-									if (isset($Entity->$infotype) && !is_null($Entity->$infotype))
-										foreach ($Entity->$infotype as $item)
-											print $item->Display();
-									break;
-								case 'properties':
-									if (isset($Entity->proplist) && !is_null($Entity->proplist))
-										print $Entity->proplist;
-									break;
-								}
-						}
-						elseif ($CMD == 'LS'){
-						if ($Entity instanceof __PAent_Sink || $Entity instanceof __PAent_Source)
-							printf("%s%s\n", $Entity->is_default?'>':' ',$Entity);
-							else
-							echo "$Entity\n";
-						}
-						else // Detailed info
-						echo PulseAudio::DisplayEntity($Entity, false) , "\n\n";
+						switch ($infotype){
+							case '':
+								if ($Entity instanceof __PAent_Sink || $Entity instanceof __PAent_Source)
+									printf("%s%s\n", $Entity->is_default?'>':' ',$Entity);
+									else
+									echo "$Entity\n";
+								break;
+							case 'full':
+								echo PulseAudio::DisplayEntity($Entity, false) , "\n\n";
+								break;
+							case 'volume':
+								if (isset($Entity->volume) && !is_null($Entity->volume))
+									print $Entity->volume->Display();
+								break;
+							case 'ports':
+							case 'profiles':
+								if (isset($Entity->$infotype) && !is_null($Entity->$infotype))
+									foreach ($Entity->$infotype as $item)
+										print $item->Display();
+								break;
+							case 'properties':
+								if (isset($Entity->proplist) && !is_null($Entity->proplist))
+									print $Entity->proplist;
+								break;
+							}
 				}
 			break;
 		case 'MV':
