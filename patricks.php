@@ -60,7 +60,7 @@ $ARGS = array_slice($argv, 2);
 
 /* ==========[ COMMANDS ] ========== */
 
-try { $CMD = strtoupper(str_imatch(array('ls', 'show', 'mv', 'set', 'suspend'), $CMD, true)); }
+try { $CMD = strtoupper(str_imatch(array('ls', 'show', 'mv', 'set', 'suspend', 'volume'), $CMD, true)); }
 	catch (ECli $e) { $CMD = '*UNKNOWN*'; }
 
 try {
@@ -200,12 +200,12 @@ try {
 						$Port = $Entity->ports[$set_ref];
 						else
 						$Port = next_entity($Entity->ports, 'is_active');
-					`pacmd set-$entity_t-port "{$Entity->id}" "{$Port->name}"`;
+					`pactl set-$entity_t-port "{$Entity->id}" "{$Port->name}"`;
 					print "$Entity: {$Port}\n";
 					break;
 				case 'profile':
 					$Profile = $Entity->profiles[$set_ref];
-					`pacmd set-$entity_t-profile "{$Entity->id}" "{$Profile->name}"`;
+					`pactl set-$entity_t-profile "{$Entity->id}" "{$Profile->name}"`;
 					print "$Entity: {$Profile}\n";
 					break;
 				}
@@ -229,7 +229,38 @@ try {
 			`pactl suspend-$entity_t "{$Entity->name}" $switch`;
 			print "$Entity: ".($switch?'suspend':'run')."\n";
 			break;
-		// TODO: volume, mute, suspend
+		case 'VOLUME':
+			if (count($ARGS) < 3) {
+				display_help();
+				exit(1);
+				}
+			//=== Collect data
+			$entity_t = str_imatch(array('sink', 'input', 'source'), array_shift($ARGS), true); // [0]: Entity type to control
+			$entity_ref = array_shift($ARGS); // [1]: Entity reference
+			$action = str_imatch(array('mute', 'set'), array_shift($ARGS), true); // [2]: action: mute|set
+
+			//=== Prepare
+			$Entity = find_entity($PA, "{$entity_t}s", $entity_ref);
+
+			//=== Action!
+			if ($entity_t == 'input')
+				$entity_t = 'sink-input'; // PulseAudio uses a different name
+			switch ($action){
+				case 'mute':
+					$switch = count($ARGS)?  (  (int)(bool)array_shift($ARGS)  )  : 'toggle'; // [3]: switch action
+					if ($switch === 'toggle')
+						$switch = (int)(!$Entity->mute);
+					`pactl set-$entity_t-mute "{$Entity->name}" $switch`;
+					print "$Entity: mute=".($switch?'true':'false')."\n";
+					break;
+				case 'set':
+					$volp = count($ARGS)?  (float)array_shift($ARGS)  : $Entity->volume->avg;  // [3]: volume percentage
+					$vol = (int)(($volp/100) * 65535);
+					`pactl set-$entity_t-volume "{$Entity->name}" $vol`;
+					print "$Entity: volume=$volp%\n";
+					break;
+				}
+			break;
 		default:
 			display_help();
 			exit(1);
