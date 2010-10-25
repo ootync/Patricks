@@ -38,6 +38,7 @@ Examples:
 	patricks ls sink 0
 	patricks ls si 'alsa_card.pci-0000_00_1b.0' vol
 	patricks mv sink 0 all
+	patricks mv sink next all
 	patricks mv sink 'alsa_card.pci-0000_00_1b.0' 1 19 235
 	patricks set sink 0 def
 	patricks set source 0 port next
