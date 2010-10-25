@@ -321,7 +321,7 @@ abstract class PulseAudioEntity {
 
 	final function __toString(){
 		if (is_null($this->name))
-			return "{$this->_Name}#{$this->id}".(isset($this->proplist['application.name'])? ' "'.$this->proplist['application.name'].'"': '');
+			return "{$this->_Name}#{$this->id} <>".(isset($this->proplist['application.name'])? ' "'.$this->proplist['application.name'].'"': '');
 		return "{$this->_Name}#{$this->id} <{$this->name}>";
 		}
 	}
