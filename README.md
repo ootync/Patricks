@@ -7,6 +7,7 @@ Installation
 ------------
 
 Make sure you have PHP >=5.3 installed.
+
 Place the script's files somewhere and make a symlink into your $PATH.
 
 Usage
@@ -20,6 +21,7 @@ Each entity reference consists of two parts:
     <entity_t> <entity-ref>
 
 entity_t — Is the name of the entity: sink, input, source, output, card, module, client, sample.
+
 entity-ref — Is either an index or a Name
 
 ### Discovering entities
@@ -32,6 +34,7 @@ entity-ref — Is either an index or a Name
 Will list all the available entities. The index comes first, the name comes in angular brackets.
 
 Some entities do not have a name: Clients, Inputs & Outputs: you have to specify them by their index.
+
 In order to ease the pain of distinguishing them, the 'application.name' property is displayed next to them.
 
 ### Shortening
@@ -48,8 +51,7 @@ can be given as
 unless the literal is ambiguous.
 
 ### The 'current entity'
-Some entities can be selected in either way: e.g. a Sink can be the 'default-sink', a Sink's Port can be the 'active port'.
-Such entities are prefixed with '>' in listings:
+Some entities can be selected in either way: e.g. a Sink can be the 'default-sink', a Sink's Port can be the 'active port'. Such entities are prefixed with '>' in listings:
 
     $ patricks ls si 0 po
     >#0 analog-output: "Analog Output" prio=9900
@@ -59,4 +61,5 @@ PHP API
 -------
 
 Patricks comes with 'PulseAudio.API.php': an object-oriented API that allows you to get the fields & properties of all PulseAudio entities.
+
 It works on top of `pactl list` and `pactl stat`, parses their output and provides access to all parsed entities.
