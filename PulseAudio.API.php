@@ -298,6 +298,13 @@ abstract class PulseAudioEntity {
 			default:
 				// Try to find a property by name, with 'TRUE' value
 				$prop = strtolower(strtr($name, " \t", '_'));
+
+				// 'ent_field_404': don't raise an exception, just copy it
+				if (true){ // auto-extending!
+					if (!property_exists($this, $prop ))
+						$this->$prop = TRUE; // Simple binary copy
+					}
+
 				if (property_exists($this, $prop ) && $this->$prop === TRUE){
 					switch ($value){
 						case '(null)':
@@ -314,6 +321,7 @@ abstract class PulseAudioEntity {
 						}
 					return true;
 					}
+
 				return false;
 			}
 		return true;
