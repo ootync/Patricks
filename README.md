@@ -57,6 +57,10 @@ Some entities can be selected in either way: e.g. a Sink can be the 'default-sin
     >#0 analog-output: "Analog Output" prio=9900
      #1 analog-output-headphones: "Analog Headphones" prio=9000
 
+You can reference this entity by specifying 'this' instead of id | name. Like this:
+
+    $ patricks set sink this port next
+
 PHP API
 -------
 
