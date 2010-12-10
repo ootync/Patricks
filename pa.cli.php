@@ -4,6 +4,7 @@ class ECli extends ExceptionTemplate {
 	protected $_list = array(
 			'ent_name0'		=> array(1, 'The provided string "{needle}" matches no entity'),
 			'ent_nameN'		=> array(2, 'The provided string "{needle}" matches multiple entities'),
+			'ent_nothis'	=> array(3, 'There\'s no active entity :('),
 			);
 	}
 
@@ -39,10 +40,16 @@ function str_imatch($haystack, $needle, $partial = true){
 /** Find an entity within PulseAudio
  * @param PulseAudio	$PA
  * @param string		$entity_ts	Entity type: 'sinks'. $PA's property, actually
- * @param int|string	Entity reference
+ * @param int|string	Entity reference || 'this' to try to find the 'is_active' one
  */
 function find_entity(PulseAudio $PA, $entity_ts, $entity_ref){
 	$entities = $PA->$entity_ts;
+	if ($entity_ref == "this") {
+		foreach ($entities as $Entity)
+			if ($Entity->is_default)
+				return $Entity;
+		throw new ECli('ent_nothis');
+		}
 	return $entities[$entity_ref];
 	}
 

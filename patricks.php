@@ -21,15 +21,15 @@ function display_help(){
 PulseAudio Tricks!
 Usage:
 	patricks ls [<Entity>]								— Display a short list of entities of the specified type.
-	patricks ls <Entity> <index|name>						— Display a detailed info on one entity
-	patricks ls <Entity> <index|name> {volume|ports|profiles|properties}		— Display complex Entity properties.
-	patricks mv {sink|source} {next|<index|name>} {all|<id> [...]}			— Move some/all Sink-Input/Source-Output to another Sink/Input.
-	patricks set {sink|source} <index|name> default					— Set the default Sink/Source.
-	patricks set {sink|source} <index|name> port {next|<index|name>}		— Change the port of a Sink/Source.
-	patricks set card <index|name> profile {next|<index|name>}			— Change the profile of a card.
-	patricks suspend {sink|source} <index|name> [{0|1}]				— Suspend a Sink/Source.
-	patricks volume {sink|input|source} <index|name> mute [{0|1}]			— Set the mute switch, or toggle.
-	patricks volume {sink|input|source} <index|name> set 100%			— Set the volume of a Sink/Source or a Sink-Input.
+	patricks ls <Entity> {this|<index>|<name>}					— Display a detailed info on one entity
+	patricks ls <Entity> {this|<index>|<name>} {volume|ports|profiles|properties}	— Display complex Entity properties.
+	patricks mv {sink|source} {this|next|<index>|<name>} {all|<id> [...]}		— Move some/all Sink-Input/Source-Output to another Sink/Input.
+	patricks set {sink|source} {this|<index>|<name>} default			— Set the default Sink/Source.
+	patricks set {sink|source} {this|<index>|<name>} port {next|<index>|<name>}	— Change the port of a Sink/Source.
+	patricks set card {this|<index>|<name>} profile {next|<index>|<name>}		— Change the profile of a card.
+	patricks suspend {sink|source} {this|<index>|<name>} [{0|1}]			— Suspend a Sink/Source.
+	patricks volume {sink|input|source} {this|<index>|<name>} mute [{0|1}]		— Set the mute switch, or toggle.
+	patricks volume {sink|input|source} {this|<index>|<name>} set 100%		— Set the volume of a Sink/Source or a Sink-Input.
 Entities:
 	$entities
 Feature: all the literals can be shortened! 'sinks' => 'si', 'volume' => 'vol'
@@ -76,9 +76,10 @@ try {
 				$Entities = $PA->$entity_t;
 				// [1]: entity reference
 				if (isset($ARGS[1])){
-					if (!isset($Entities[$ARGS[1]]))
-						exit(100);
-					$Entities = array(  $Entities[$ARGS[1]]  );
+					$Entities = array(  find_entity($PA, $entities_t[0], $ARGS[1])  );
+					//if (!isset($Entities[$ARGS[1]]))
+					//	exit(100);
+					//$Entities = array(  $Entities[$ARGS[1]]  );
 					if (!isset($ARGS[2]))
 						$ARGS[2] = 'FULL';
 					}
@@ -131,18 +132,19 @@ try {
 			//=== Prepare
 			switch ($move_to_entity_t){
 				case 'sink':
-					if ($move_to_ref != 'next')
-						$move_to = $PA->sinks[$move_to_ref];
-						else
+					if ($move_to_ref == 'next')
 						$move_to = next_entity($PA->sinks, 'is_default');
+						else
+						$move_to = find_entity($PA, "sinks", $move_to_ref);
+
 					$move_entity_t = 'input';
 					$move_entities = $PA->inputs;
 					break;
 				case 'source':
-					if ($move_to_ref != 'next')
-						$move_to = $PA->sources[$move_to_ref];
-						else
+					if ($move_to_ref == 'next')
 						$move_to = next_entity($PA->sources, 'is_default');
+						else
+						$move_to = find_entity($PA, "sources", $move_to_ref);
 					$move_entity_t = 'output';
 					$move_entities = $PA->outputs;
 					break;
