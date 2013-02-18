@@ -100,7 +100,8 @@ class PulseAudio {
 			//=== Parse the header line
 			list($ent_type,$ent_index) = explode(' #', trim(array_shift($ent_str)));
 			$ent_className = "__PAent_".strtr($ent_type, ' ', '_'); // Entity class name
-			$ent_fieldName = strtolower(array_pop(explode(' ', $ent_type))).'s'; // $this->field name
+      $pop_type = explode(' ', $ent_type);
+			$ent_fieldName = strtolower(array_pop($pop_type)).'s'; // $this->field name
 			$entlist = &$this->$ent_fieldName; // reference to the field
 			//=== Create a class instance
 			if (!class_exists($ent_className, false))
