@@ -11,7 +11,7 @@ set_include_path(get_include_path() . PATH_SEPARATOR . dirname(__FILE__));
 require("PulseAudio.API.php");
 require("pa.cli.php");
 
-$PA = new PulseAudio(`LANG=en_US.UTF-8 pactl list`, `LANG=en_US.UTF-8 pactl stat`);
+$PA = new PulseAudio(`env LC_ALL=C pactl list`, `env LC_ALL=C pactl stat`);
 
 
 /* ==========[ PREPARE ] ========== */
